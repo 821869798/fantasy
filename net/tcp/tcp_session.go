@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"github.com/821869798/fantasy/net/api"
+	"github.com/821869798/fantasy/net/event"
 	"go.uber.org/atomic"
+	log "github.com/FishGoddess/logit"
 	"net"
 	"sync"
 )
@@ -19,6 +21,7 @@ type tcpSession struct {
 	sendChan chan interface{}
 
 	transmitter api.MsgTransmitter
+	handle api.MsgHandle
 
 	//退出通知
 	ctx       context.Context
@@ -32,12 +35,13 @@ type tcpSession struct {
 	endNotify func()
 }
 
-func newTcpSession(sid uint64, conn net.Conn, sendChanSize uint32, transmitter api.MsgTransmitter, endNotify func()) *tcpSession {
+func newTcpSession(sid uint64, conn net.Conn, sendChanSize uint32, transmitter api.MsgTransmitter,handle api.MsgHandle, endNotify func()) *tcpSession {
 	s := &tcpSession{
 		sid:         sid,
 		conn:        conn,
 		sendChan:    make(chan interface{}, sendChanSize),
 		transmitter: transmitter,
+		handle : handle,
 		endNotify:   endNotify,
 	}
 
@@ -46,6 +50,8 @@ func newTcpSession(sid uint64, conn net.Conn, sendChanSize uint32, transmitter a
 }
 
 func (s *tcpSession) Start() {
+
+	s.handle.TriggerEvent(&event.EventSessionAdd{ Session: s})
 
 	s.exitSync.Add(2)
 
@@ -120,7 +126,18 @@ func (s *tcpSession) recvLoop() {
 		select {
 		case <-s.ctx.Done():
 			return
+		default:
 		}
+
+		msg ,err := s.transmitter.OnRecvMsg(s)
+
+		if err != nil{
+			log.Error("tcpSession recvloop recv msg error %v",err)
+
+			return
+		}
+
+		s.handle.TriggerEvent(&event.EventSessionMsg{ Session: s,Msg: msg})
 	}
 
 }

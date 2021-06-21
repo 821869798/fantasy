@@ -70,7 +70,7 @@ func (t *tcpTransmitter) OnRecvMsg(s api.Session) (interface{}, error) {
 	msgSize := t.order.Uint32(t.headLen)
 
 	if msgSize > MsgMaxSize || msgSize < MsgHeadLen {
-		return nil, fmt.Errorf("收到的数据长度非法:%d", size)
+		return nil, fmt.Errorf("收到的数据长度非法:%d", msgSize)
 	}
 
 	msgData := make([]byte, msgSize-MsgHeadLen)

@@ -1,3 +1,5 @@
+github.com/FishGoddess/logit v0.3.3 h1:qnxPIvq8YXGwG9y59Sk0hjoArOzWukQQqIsPT3dh3Xw=
+github.com/FishGoddess/logit v0.3.3/go.mod h1:a2dFSibwfZXNNZ/V1jMOQBImPoySaxdPFThbsm17ZdY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
