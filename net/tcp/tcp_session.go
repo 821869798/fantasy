@@ -5,8 +5,8 @@ import (
 	"errors"
 	"github.com/821869798/fantasy/net/api"
 	"github.com/821869798/fantasy/net/event"
-	"go.uber.org/atomic"
 	log "github.com/FishGoddess/logit"
+	"go.uber.org/atomic"
 	"net"
 	"sync"
 )
@@ -15,13 +15,12 @@ var SessionClosedError = errors.New("Session Closed")
 var SessionBlockedError = errors.New("Session Blocked")
 
 type tcpSession struct {
-	sid  uint64
-	conn net.Conn
-
+	sid      uint64
+	conn     net.Conn
 	sendChan chan interface{}
 
 	transmitter api.MsgTransmitter
-	handle api.MsgHandle
+	handle      api.MsgHandle
 
 	//退出通知
 	ctx       context.Context
@@ -31,18 +30,15 @@ type tcpSession struct {
 	exitSync sync.WaitGroup
 
 	isClose atomic.Bool
-
-	endNotify func()
 }
 
-func newTcpSession(sid uint64, conn net.Conn, sendChanSize uint32, transmitter api.MsgTransmitter,handle api.MsgHandle, endNotify func()) *tcpSession {
+func newTcpSession(sid uint64, conn net.Conn, sendChanSize uint32, transmitter api.MsgTransmitter, handle api.MsgHandle) *tcpSession {
 	s := &tcpSession{
 		sid:         sid,
 		conn:        conn,
 		sendChan:    make(chan interface{}, sendChanSize),
 		transmitter: transmitter,
-		handle : handle,
-		endNotify:   endNotify,
+		handle:      handle,
 	}
 
 	s.ctx, s.ctxCancel = context.WithCancel(context.Background())
@@ -51,22 +47,14 @@ func newTcpSession(sid uint64, conn net.Conn, sendChanSize uint32, transmitter a
 
 func (s *tcpSession) Start() {
 
-	s.handle.TriggerEvent(&event.EventSessionAdd{ Session: s})
+	s.handle.TriggerEvent(&event.SessionAdd{Session: s})
 
 	s.exitSync.Add(2)
-
-	go func() {
-		s.exitSync.Wait()
-
-		if s.endNotify != nil {
-			s.endNotify()
-		}
-
-	}()
 
 	go s.recvLoop()
 	go s.sendLoop()
 
+	s.exitSync.Wait()
 }
 
 func (s *tcpSession) Raw() interface{} {
@@ -129,15 +117,15 @@ func (s *tcpSession) recvLoop() {
 		default:
 		}
 
-		msg ,err := s.transmitter.OnRecvMsg(s)
+		msg, err := s.transmitter.OnRecvMsg(s)
 
-		if err != nil{
-			log.Error("tcpSession recvloop recv msg error %v",err)
+		if err != nil {
+			log.Error("tcpSession recvloop recv msg error %v", err)
 
 			return
 		}
 
-		s.handle.TriggerEvent(&event.EventSessionMsg{ Session: s,Msg: msg})
+		s.handle.TriggerEvent(&event.SessionMsg{Session: s, Msg: msg})
 	}
 
 }

@@ -2,13 +2,11 @@ package event
 
 import "github.com/821869798/fantasy/net/api"
 
-type EventSessionMsg struct {
+type SessionMsg struct {
 	Session api.Session
-	Msg interface{}
+	Msg     interface{}
 }
 
-type EventSessionAdd struct {
+type SessionAdd struct {
 	Session api.Session
 }
-
-

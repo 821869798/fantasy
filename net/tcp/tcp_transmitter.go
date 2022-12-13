@@ -20,6 +20,14 @@ type LTVPacket struct {
 	Value []byte
 }
 
+func NewTcpPacket(t uint32, v []byte) *LTVPacket {
+	return &LTVPacket{
+		Len:   uint32(len(v)) + MsgHeadLen,
+		Type:  t,
+		Value: v,
+	}
+}
+
 type tcpTransmitter struct {
 	order   binary.ByteOrder
 	headLen []byte
@@ -39,15 +47,14 @@ func (t *tcpTransmitter) OnSendMsg(s api.Session, msg interface{}) error {
 		return nil
 	}
 
-	packet, ok := msg.(LTVPacket)
+	packet, ok := msg.(*LTVPacket)
 	if !ok {
 		return nil
 	}
 
-	msgSize := len(packet.Value)
-	rawData := make([]byte, msgSize+MsgHeadLen)
+	rawData := make([]byte, packet.Len)
 
-	t.order.PutUint32(rawData, uint32(msgSize))
+	t.order.PutUint32(rawData, packet.Len)
 	t.order.PutUint32(rawData[MsgSizeLen:], packet.Type)
 	copy(rawData[MsgHeadLen:], packet.Value)
 
@@ -70,10 +77,10 @@ func (t *tcpTransmitter) OnRecvMsg(s api.Session) (interface{}, error) {
 	msgSize := t.order.Uint32(t.headLen)
 
 	if msgSize > MsgMaxSize || msgSize < MsgHeadLen {
-		return nil, fmt.Errorf("收到的数据长度非法:%d", msgSize)
+		return nil, fmt.Errorf("recv packet length error:%d", msgSize)
 	}
 
-	msgData := make([]byte, msgSize-MsgHeadLen)
+	msgData := make([]byte, msgSize-MsgSizeLen)
 	if _, err := io.ReadFull(reader, msgData); err != nil {
 		return nil, err
 	}
@@ -81,9 +88,7 @@ func (t *tcpTransmitter) OnRecvMsg(s api.Session) (interface{}, error) {
 	msgType := t.order.Uint32(msgData)
 	msgBody := msgData[MsgTypeLen:]
 
-	return &LTVPacket{
-		Len:   msgSize,
-		Type:  msgType,
-		Value: msgBody,
-	}, nil
+	packet := NewTcpPacket(msgType, msgBody)
+
+	return packet, nil
 }
