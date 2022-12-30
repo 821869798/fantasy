@@ -141,4 +141,7 @@ func (s *tcpSession) Close() {
 
 	s.ctxCancel()
 	_ = s.conn.Close()
+
+	s.handle.TriggerEvent(&event.SessionRemove{Session: s})
+
 }

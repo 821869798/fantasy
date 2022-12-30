@@ -10,3 +10,7 @@ type SessionMsg struct {
 type SessionAdd struct {
 	Session api.Session
 }
+
+type SessionRemove struct {
+	Session api.Session
+}
