@@ -55,6 +55,8 @@ func (s *tcpSession) Start() {
 	go s.sendLoop()
 
 	s.exitSync.Wait()
+
+	s.handle.TriggerEvent(&event.SessionRemove{Session: s})
 }
 
 func (s *tcpSession) Raw() interface{} {
@@ -141,7 +143,5 @@ func (s *tcpSession) Close() {
 
 	s.ctxCancel()
 	_ = s.conn.Close()
-
-	s.handle.TriggerEvent(&event.SessionRemove{Session: s})
 
 }
