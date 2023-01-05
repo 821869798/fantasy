@@ -29,14 +29,12 @@ func NewTcpPacket(t uint32, v []byte) *LTVPacket {
 }
 
 type tcpTransmitter struct {
-	order   binary.ByteOrder
-	headLen []byte
+	order binary.ByteOrder
 }
 
 func NewTcpTransmitter(order binary.ByteOrder) api.MsgTransmitter {
 	t := &tcpTransmitter{
-		order:   order,
-		headLen: make([]byte, MsgSizeLen),
+		order: order,
 	}
 	return t
 }
@@ -70,11 +68,12 @@ func (t *tcpTransmitter) OnRecvMsg(s api.Session) (interface{}, error) {
 		return nil, nil
 	}
 
-	if _, err := io.ReadFull(reader, t.headLen); err != nil {
+	headLen := make([]byte, MsgSizeLen)
+	if _, err := io.ReadFull(reader, headLen); err != nil {
 		return nil, err
 	}
 
-	msgSize := t.order.Uint32(t.headLen)
+	msgSize := t.order.Uint32(headLen)
 
 	if msgSize > MsgMaxSize || msgSize < MsgHeadLen {
 		return nil, fmt.Errorf("recv packet length error:%d", msgSize)
