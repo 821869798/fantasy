@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/821869798/fantasy/net/event"
 	"github.com/821869798/fantasy/net/tcp"
-	log "github.com/FishGoddess/logit"
+	"github.com/gookit/slog"
 )
 
 type MsgHandle struct {
@@ -16,15 +16,14 @@ func (m *MsgHandle) TriggerEvent(e interface{}) {
 		m := e.(*event.SessionMsg)
 		packet, ok := m.Msg.(*tcp.LTVPacket)
 		if ok {
-			log.Info("MsgHandle recv server msg:%s", string(packet.Value))
+			slog.Infof("MsgHandle recv server msg:%s", string(packet.Value))
 		}
 	}
 }
 
 func main() {
 
-	log.Me().SetLevel(log.DebugLevel)
-	log.Me().NeedCaller(true)
+	slog.SetLogLevel(slog.DebugLevel)
 
 	c := tcp.NewTcpConnector("127.0.0.1:7801", &MsgHandle{}, nil, nil)
 	c.Start()
@@ -33,7 +32,7 @@ func main() {
 	for true {
 		_, err := fmt.Scanln(&input)
 		if err != nil {
-			log.Error("%v", err)
+			slog.Errorf("%v", err)
 			return
 		}
 
@@ -41,7 +40,7 @@ func main() {
 
 		err = c.Session().Send(packet)
 		if err != nil {
-			log.Error("client send error:%v", err)
+			slog.Errorf("client send error:%v", err)
 		}
 	}
 }

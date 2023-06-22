@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"github.com/821869798/fantasy/net/api"
-	log "github.com/FishGoddess/logit"
+	"github.com/gookit/slog"
 	"go.uber.org/atomic"
 	"golang.org/x/net/netutil"
 	"net"
@@ -12,11 +12,11 @@ import (
 )
 
 type TcpAcceptor struct {
-	gsid        atomic.Uint64
-	addr        string
-	transmitter api.MsgTransmitter
-	handle      api.MsgHandle
-	opt         *TcpStartOpt
+	gsid   atomic.Uint64
+	addr   string
+	codec  api.MsgCodec
+	handle api.MsgHandle
+	opt    *TcpStartOpt
 
 	sessionIDGen uint64
 	sessMap      sync.Map
@@ -27,12 +27,12 @@ type TcpAcceptor struct {
 	listener net.Listener
 }
 
-func NewTcpAcceptor(addr string, handle api.MsgHandle, transmitter api.MsgTransmitter, opt *TcpStartOpt) *TcpAcceptor {
+func NewTcpAcceptor(addr string, handle api.MsgHandle, codec api.MsgCodec, opt *TcpStartOpt) *TcpAcceptor {
 	a := &TcpAcceptor{
-		addr:        addr,
-		transmitter: transmitter,
-		handle:      handle,
-		opt:         opt,
+		addr:   addr,
+		codec:  codec,
+		handle: handle,
+		opt:    opt,
 	}
 
 	a.ctx, a.ctxCancel = context.WithCancel(context.Background())
@@ -40,8 +40,8 @@ func NewTcpAcceptor(addr string, handle api.MsgHandle, transmitter api.MsgTransm
 		// Create Default
 		a.opt = NewTcpStartOpt()
 	}
-	if a.transmitter == nil {
-		a.transmitter = NewTcpTransmitter(binary.LittleEndian)
+	if a.codec == nil {
+		a.codec = NewTcpMsgCodec(binary.BigEndian)
 	}
 
 	return a
@@ -60,7 +60,7 @@ func (t *TcpAcceptor) init() bool {
 
 	ln, err := net.Listen("tcp", t.addr)
 	if err != nil {
-		log.Error("TcpAcceptor Listen error %v", err)
+		slog.Errorf("TcpAcceptor Listen error %v", err)
 		return false
 	}
 	//limit connect count
@@ -78,7 +78,7 @@ func (t *TcpAcceptor) run() {
 			{
 				conn, err := t.listener.Accept()
 				if err != nil {
-					log.Error("TcpAcceptor accept connection error ", err)
+					slog.Errorf("TcpAcceptor accept connection error:%v", err)
 					continue
 				}
 				t.sessionIDGen++
@@ -91,9 +91,9 @@ func (t *TcpAcceptor) run() {
 }
 
 func (t *TcpAcceptor) handleSession(sid uint64, conn net.Conn) {
-	log.Debug("TcpAcceptor handle new session sid %v addr %v", sid, conn.RemoteAddr())
+	slog.Debugf("TcpAcceptor handle new session sid %v addr %v", sid, conn.RemoteAddr())
 
-	s := newTcpSession(sid, conn, t.opt.SendChanSize, t.transmitter, t.handle)
+	s := newTcpSession(sid, conn, t.opt.SendChanSize, t.codec, t.handle)
 	t.sessMap.Store(sid, conn)
 	s.Start()
 	t.sessMap.Delete(sid)

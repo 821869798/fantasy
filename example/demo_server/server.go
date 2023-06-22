@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/821869798/fantasy/net/event"
 	"github.com/821869798/fantasy/net/tcp"
-	log "github.com/FishGoddess/logit"
+	"github.com/gookit/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,18 +18,23 @@ func (m *MsgHandle) TriggerEvent(e interface{}) {
 		m := e.(*event.SessionMsg)
 		packet, ok := m.Msg.(*tcp.LTVPacket)
 		if ok {
-			log.Info("MsgHandle recv client msg:%s", string(packet.Value))
+			slog.Infof("MsgHandle recv client msg:%s", string(packet.Value))
 		}
 		m.Session.Send(packet)
+	case *event.SessionAdd:
+		m := e.(*event.SessionAdd)
+		slog.Infof("Session connected :%v", m.Session.RemoteAddr())
+	case *event.SessionRemove:
+		m := e.(*event.SessionRemove)
+		slog.Infof("Session disconnected :%v", m.Session.RemoteAddr())
 	}
 }
 
 func main() {
 
-	log.Me().SetLevel(log.DebugLevel)
-	log.Me().NeedCaller(true)
+	slog.SetLogLevel(slog.DebugLevel)
 
-	log.Info("server start...")
+	slog.Infof("server start...")
 	a := tcp.NewTcpAcceptor(":7801", &MsgHandle{}, nil, nil)
 	a.Start()
 

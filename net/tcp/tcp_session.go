@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/821869798/fantasy/net/api"
 	"github.com/821869798/fantasy/net/event"
-	log "github.com/FishGoddess/logit"
+	"github.com/gookit/slog"
 	"go.uber.org/atomic"
 	"net"
 	"sync"
@@ -19,7 +19,7 @@ type tcpSession struct {
 	conn     net.Conn
 	sendChan chan interface{}
 
-	transmitter api.MsgTransmitter
+	transmitter api.MsgCodec
 	handle      api.MsgHandle
 
 	//退出通知
@@ -32,7 +32,7 @@ type tcpSession struct {
 	isClose atomic.Bool
 }
 
-func newTcpSession(sid uint64, conn net.Conn, sendChanSize uint32, transmitter api.MsgTransmitter, handle api.MsgHandle) *tcpSession {
+func newTcpSession(sid uint64, conn net.Conn, sendChanSize uint32, transmitter api.MsgCodec, handle api.MsgHandle) *tcpSession {
 	s := &tcpSession{
 		sid:         sid,
 		conn:        conn,
@@ -122,7 +122,7 @@ func (s *tcpSession) recvLoop() {
 		msg, err := s.transmitter.OnRecvMsg(s)
 
 		if err != nil {
-			log.Error("tcpSession recvloop recv msg error %v", err)
+			slog.Debugf("tcpSession[%v] receive loop msg error %v", s.RemoteAddr(), err)
 
 			return
 		}

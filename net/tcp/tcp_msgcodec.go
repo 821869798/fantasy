@@ -28,18 +28,18 @@ func NewTcpPacket(t uint32, v []byte) *LTVPacket {
 	}
 }
 
-type tcpTransmitter struct {
+type tcpMsgCodec struct {
 	order binary.ByteOrder
 }
 
-func NewTcpTransmitter(order binary.ByteOrder) api.MsgTransmitter {
-	t := &tcpTransmitter{
+func NewTcpMsgCodec(order binary.ByteOrder) api.MsgCodec {
+	t := &tcpMsgCodec{
 		order: order,
 	}
 	return t
 }
 
-func (t *tcpTransmitter) OnSendMsg(s api.Session, msg interface{}) error {
+func (t *tcpMsgCodec) OnSendMsg(s api.Session, msg interface{}) error {
 	writer, ok := s.Raw().(io.Writer)
 	if !ok || writer == nil {
 		return nil
@@ -60,7 +60,7 @@ func (t *tcpTransmitter) OnSendMsg(s api.Session, msg interface{}) error {
 
 	return err
 }
-func (t *tcpTransmitter) OnRecvMsg(s api.Session) (interface{}, error) {
+func (t *tcpMsgCodec) OnRecvMsg(s api.Session) (interface{}, error) {
 	reader, ok := s.Raw().(io.Reader)
 
 	// 转换错误，或者连接已经关闭时退出
