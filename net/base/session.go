@@ -1,8 +1,7 @@
-package tcp
+package base
 
 import (
 	"context"
-	"errors"
 	"github.com/821869798/fantasy/net/api"
 	"github.com/821869798/fantasy/net/event"
 	"github.com/gookit/slog"
@@ -11,16 +10,13 @@ import (
 	"sync"
 )
 
-var SessionClosedError = errors.New("Session Closed")
-var SessionBlockedError = errors.New("Session Blocked")
-
-type tcpSession struct {
+type Session struct {
 	sid      uint64
 	conn     net.Conn
 	sendChan chan interface{}
 
-	transmitter api.MsgCodec
-	handle      api.MsgHandle
+	adapter api.ISessionAdapter
+	handle  api.IMsgHandle
 
 	//退出通知
 	ctx       context.Context
@@ -32,20 +28,22 @@ type tcpSession struct {
 	isClose atomic.Bool
 }
 
-func newTcpSession(sid uint64, conn net.Conn, sendChanSize uint32, transmitter api.MsgCodec, handle api.MsgHandle) *tcpSession {
-	s := &tcpSession{
-		sid:         sid,
-		conn:        conn,
-		sendChan:    make(chan interface{}, sendChanSize),
-		transmitter: transmitter,
-		handle:      handle,
+func newSession(sid uint64, conn net.Conn, adapter api.ISessionAdapter) *Session {
+	s := &Session{
+		sid:      sid,
+		conn:     conn,
+		sendChan: make(chan interface{}, adapter.SendChanSize()),
+		adapter:  adapter,
+		handle:   adapter.Handle(),
 	}
 
 	s.ctx, s.ctxCancel = context.WithCancel(context.Background())
 	return s
 }
 
-func (s *tcpSession) Start() {
+func (s *Session) Start() {
+
+	slog.Debugf("%s[%v] created,sid:%v", s.adapter.Name(), s.RemoteAddr(), s.sid)
 
 	s.handle.TriggerEvent(&event.SessionAdd{Session: s})
 
@@ -59,21 +57,21 @@ func (s *tcpSession) Start() {
 	s.handle.TriggerEvent(&event.SessionRemove{Session: s})
 }
 
-func (s *tcpSession) Raw() interface{} {
+func (s *Session) Raw() interface{} {
 	return s.conn
 }
 
-func (s *tcpSession) RemoteAddr() net.Addr {
+func (s *Session) RemoteAddr() net.Addr {
 	return s.conn.RemoteAddr()
 }
 
-func (s *tcpSession) Sid() uint64 {
+func (s *Session) Sid() uint64 {
 	return s.sid
 }
 
-func (s *tcpSession) Send(msg interface{}) error {
+func (s *Session) Send(msg interface{}) error {
 	if s.IsClose() {
-		return SessionClosedError
+		return api.SessionClosedError
 	}
 
 	select {
@@ -81,11 +79,11 @@ func (s *tcpSession) Send(msg interface{}) error {
 		return nil
 	default:
 		s.Close()
-		return SessionBlockedError
+		return api.SessionBlockedError
 	}
 }
 
-func (s *tcpSession) sendLoop() {
+func (s *Session) sendLoop() {
 
 	defer func() {
 		s.Close()
@@ -97,15 +95,16 @@ func (s *tcpSession) sendLoop() {
 		case <-s.ctx.Done():
 			return
 		case msg := <-s.sendChan:
-			err := s.transmitter.OnSendMsg(s, msg)
+			err := s.adapter.SendMsg(s, msg)
 			if err != nil {
+				slog.Warnf("%s[%v] send msg error %v", s.adapter.Name(), s.RemoteAddr(), err)
 				return
 			}
 		}
 	}
 }
 
-func (s *tcpSession) recvLoop() {
+func (s *Session) recvLoop() {
 
 	defer func() {
 		s.Close()
@@ -119,11 +118,10 @@ func (s *tcpSession) recvLoop() {
 		default:
 		}
 
-		msg, err := s.transmitter.OnRecvMsg(s)
+		msg, err := s.adapter.RecvMsg(s)
 
 		if err != nil {
-			slog.Debugf("tcpSession[%v] receive loop msg error %v", s.RemoteAddr(), err)
-
+			slog.Debugf("%s[%v] receive loop msg error %v", s.adapter.Name(), s.RemoteAddr(), err)
 			return
 		}
 
@@ -132,11 +130,11 @@ func (s *tcpSession) recvLoop() {
 
 }
 
-func (s *tcpSession) IsClose() bool {
+func (s *Session) IsClose() bool {
 	return s.isClose.Load()
 }
 
-func (s *tcpSession) Close() {
+func (s *Session) Close() {
 	if s.IsClose() {
 		return
 	}

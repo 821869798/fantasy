@@ -2,7 +2,8 @@ package main
 
 import (
 	"github.com/821869798/fantasy/net/event"
-	"github.com/821869798/fantasy/net/tcp"
+	"github.com/821869798/fantasy/net/kcp"
+	"github.com/821869798/fantasy/net/packet"
 	"github.com/gookit/slog"
 	"os"
 	"os/signal"
@@ -16,11 +17,11 @@ func (m *MsgHandle) TriggerEvent(e interface{}) {
 	switch e.(type) {
 	case *event.SessionMsg:
 		m := e.(*event.SessionMsg)
-		packet, ok := m.Msg.(*tcp.LTVPacket)
+		p, ok := m.Msg.(*packet.LTVPacket)
 		if ok {
-			slog.Infof("MsgHandle recv client msg:%s", string(packet.Value))
+			slog.Infof("MsgHandle recv client msg:%s", string(p.Value))
 		}
-		m.Session.Send(packet)
+		_ = m.Session.Send(p)
 	case *event.SessionAdd:
 		m := e.(*event.SessionAdd)
 		slog.Infof("Session connected :%v", m.Session.RemoteAddr())
@@ -34,8 +35,9 @@ func main() {
 
 	slog.SetLogLevel(slog.DebugLevel)
 
-	slog.Infof("server start...")
-	a := tcp.NewTcpAcceptor(":7801", &MsgHandle{}, nil, nil)
+	slog.Infof("kcp server start...")
+	a := kcp.NewKcpAcceptor("127.0.0.1:7801", &MsgHandle{}, nil, nil)
+	//public internet //a := tcp.NewKcpAcceptor(":7801", &MsgHandle{}, nil, nil)
 	a.Start()
 
 	c := make(chan os.Signal, 1)

@@ -1,4 +1,4 @@
-package tcp
+package packet
 
 import (
 	"encoding/binary"
@@ -14,13 +14,14 @@ const (
 	MsgMaxSize = 65536
 )
 
+// LTVPacket ltv数据包格式：Length + TypeId + Value
 type LTVPacket struct {
 	Len   uint32
 	Type  uint32
 	Value []byte
 }
 
-func NewTcpPacket(t uint32, v []byte) *LTVPacket {
+func NewLTVPacket(t uint32, v []byte) *LTVPacket {
 	return &LTVPacket{
 		Len:   uint32(len(v)) + MsgHeadLen,
 		Type:  t,
@@ -28,18 +29,18 @@ func NewTcpPacket(t uint32, v []byte) *LTVPacket {
 	}
 }
 
-type tcpMsgCodec struct {
+type ltvMsgCodec struct {
 	order binary.ByteOrder
 }
 
-func NewTcpMsgCodec(order binary.ByteOrder) api.MsgCodec {
-	t := &tcpMsgCodec{
+func NewLTVMsgCodec(order binary.ByteOrder) api.IMsgCodec {
+	t := &ltvMsgCodec{
 		order: order,
 	}
 	return t
 }
 
-func (t *tcpMsgCodec) OnSendMsg(s api.Session, msg interface{}) error {
+func (t *ltvMsgCodec) OnSendMsg(s api.ISession, msg interface{}) error {
 	writer, ok := s.Raw().(io.Writer)
 	if !ok || writer == nil {
 		return nil
@@ -60,7 +61,7 @@ func (t *tcpMsgCodec) OnSendMsg(s api.Session, msg interface{}) error {
 
 	return err
 }
-func (t *tcpMsgCodec) OnRecvMsg(s api.Session) (interface{}, error) {
+func (t *ltvMsgCodec) OnRecvMsg(s api.ISession) (interface{}, error) {
 	reader, ok := s.Raw().(io.Reader)
 
 	// 转换错误，或者连接已经关闭时退出
@@ -87,7 +88,7 @@ func (t *tcpMsgCodec) OnRecvMsg(s api.Session) (interface{}, error) {
 	msgType := t.order.Uint32(msgData)
 	msgBody := msgData[MsgTypeLen:]
 
-	packet := NewTcpPacket(msgType, msgBody)
+	packet := NewLTVPacket(msgType, msgBody)
 
 	return packet, nil
 }
