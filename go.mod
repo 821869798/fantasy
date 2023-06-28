@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/gookit/slog v0.5.2
+	github.com/gorilla/websocket v1.5.0
 	github.com/xtaci/kcp-go/v5 v5.6.2
 	go.uber.org/atomic v1.11.0
 	golang.org/x/net v0.11.0

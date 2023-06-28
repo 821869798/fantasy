@@ -83,6 +83,17 @@ func (a *kcpSessionAdapter) Name() string {
 func (a *kcpSessionAdapter) SendChanSize() uint32 {
 	return a.opt.SendChanSize
 }
+
+func (a *kcpSessionAdapter) RemoteAddr(rawConn interface{}) net.Addr {
+	conn, _ := rawConn.(net.Conn)
+	return conn.RemoteAddr()
+}
+
+func (a *kcpSessionAdapter) CloseConn(rawConn interface{}) error {
+	conn, _ := rawConn.(net.Conn)
+	return conn.Close()
+}
+
 func (a *kcpSessionAdapter) Handle() api.IMsgHandle {
 	return a.handle
 }

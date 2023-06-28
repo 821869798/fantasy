@@ -12,7 +12,7 @@ import (
 
 type Session struct {
 	sid      uint64
-	conn     net.Conn
+	conn     interface{}
 	sendChan chan interface{}
 
 	adapter api.ISessionAdapter
@@ -28,7 +28,7 @@ type Session struct {
 	isClose atomic.Bool
 }
 
-func newSession(sid uint64, conn net.Conn, adapter api.ISessionAdapter) *Session {
+func NewSession(sid uint64, conn interface{}, adapter api.ISessionAdapter) *Session {
 	s := &Session{
 		sid:      sid,
 		conn:     conn,
@@ -62,7 +62,7 @@ func (s *Session) Raw() interface{} {
 }
 
 func (s *Session) RemoteAddr() net.Addr {
-	return s.conn.RemoteAddr()
+	return s.adapter.RemoteAddr(s.conn)
 }
 
 func (s *Session) Sid() uint64 {
@@ -140,6 +140,6 @@ func (s *Session) Close() {
 	}
 
 	s.ctxCancel()
-	_ = s.conn.Close()
+	_ = s.adapter.CloseConn(s.conn)
 
 }

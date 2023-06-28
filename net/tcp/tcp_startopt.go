@@ -1,6 +1,6 @@
 package tcp
 
-//启动参数
+// TcpStartOpt 启动参数
 type TcpStartOpt struct {
 	MaxConns     int
 	SendChanSize uint32

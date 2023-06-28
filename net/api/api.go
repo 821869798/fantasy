@@ -26,6 +26,8 @@ type INetwork interface {
 type ISessionAdapter interface {
 	Name() string
 	SendChanSize() uint32
+	RemoteAddr(rawConn interface{}) net.Addr
+	CloseConn(rawConn interface{}) error
 	Handle() IMsgHandle
 	SendMsg(s ISession, msg interface{}) error
 	RecvMsg(s ISession) (interface{}, error)

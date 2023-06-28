@@ -2,7 +2,7 @@ package kcp
 
 import "time"
 
-// 启动参数
+// KcpStartOpt 启动参数
 type KcpStartOpt struct {
 	MaxConns     int
 	SendChanSize uint32

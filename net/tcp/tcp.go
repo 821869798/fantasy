@@ -81,6 +81,17 @@ func (a *tcpSessionAdapter) Name() string {
 func (a *tcpSessionAdapter) SendChanSize() uint32 {
 	return a.opt.SendChanSize
 }
+
+func (a *tcpSessionAdapter) RemoteAddr(rawConn interface{}) net.Addr {
+	conn, _ := rawConn.(net.Conn)
+	return conn.RemoteAddr()
+}
+
+func (a *tcpSessionAdapter) CloseConn(rawConn interface{}) error {
+	conn, _ := rawConn.(net.Conn)
+	return conn.Close()
+}
+
 func (a *tcpSessionAdapter) Handle() api.IMsgHandle {
 	return a.handle
 }

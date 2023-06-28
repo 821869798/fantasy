@@ -29,7 +29,7 @@ func (c *Connector) run() {
 		return
 	}
 
-	s := newSession(1, conn, c.network.SessionAdapter())
+	s := NewSession(1, conn, c.network.SessionAdapter())
 	c.session = s
 	s.Start()
 

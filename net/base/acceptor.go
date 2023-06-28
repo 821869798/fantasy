@@ -74,7 +74,7 @@ func (t *Acceptor) run() {
 }
 
 func (t *Acceptor) handleSession(sid uint64, conn net.Conn) {
-	s := newSession(sid, conn, t.network.SessionAdapter())
+	s := NewSession(sid, conn, t.network.SessionAdapter())
 	t.sessMap.Store(sid, conn)
 	s.Start()
 	t.sessMap.Delete(sid)
