@@ -1,14 +1,14 @@
 package ws
 
 import (
-	"github.com/821869798/fantasy/net/api"
+	"github.com/821869798/fantasy/net/network"
 	"github.com/gorilla/websocket"
 	"net"
 )
 
 type wsSessionAdapter struct {
-	codec  api.IMsgCodec
-	handle api.IMsgHandle
+	codec  network.IMsgCodec
+	handle network.IMsgHandle
 	opt    *WsStartOpt
 }
 
@@ -30,14 +30,14 @@ func (a *wsSessionAdapter) CloseConn(rawConn interface{}) error {
 	return conn.Close()
 }
 
-func (a *wsSessionAdapter) Handle() api.IMsgHandle {
+func (a *wsSessionAdapter) Handle() network.IMsgHandle {
 	return a.handle
 }
-func (a *wsSessionAdapter) SendMsg(s api.ISession, msg interface{}) error {
+func (a *wsSessionAdapter) SendMsg(s network.ISession, msg interface{}) error {
 	return a.codec.OnSendMsg(s, msg)
 }
 
-func (a *wsSessionAdapter) RecvMsg(s api.ISession) (interface{}, error) {
+func (a *wsSessionAdapter) RecvMsg(s network.ISession) (interface{}, error) {
 	msg, err := a.codec.OnRecvMsg(s)
 	return msg, err
 }

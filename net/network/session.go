@@ -1,9 +1,7 @@
-package base
+package network
 
 import (
 	"context"
-	"github.com/821869798/fantasy/net/api"
-	"github.com/821869798/fantasy/net/event"
 	"github.com/gookit/slog"
 	"go.uber.org/atomic"
 	"net"
@@ -15,8 +13,8 @@ type Session struct {
 	conn     interface{}
 	sendChan chan interface{}
 
-	adapter api.ISessionAdapter
-	handle  api.IMsgHandle
+	adapter ISessionAdapter
+	handle  IMsgHandle
 
 	//退出通知
 	ctx       context.Context
@@ -28,7 +26,7 @@ type Session struct {
 	isClose atomic.Bool
 }
 
-func NewSession(sid uint64, conn interface{}, adapter api.ISessionAdapter) *Session {
+func NewSession(sid uint64, conn interface{}, adapter ISessionAdapter) *Session {
 	s := &Session{
 		sid:      sid,
 		conn:     conn,
@@ -45,7 +43,7 @@ func (s *Session) Start() {
 
 	slog.Debugf("%s[%v] created,sid:%v", s.adapter.Name(), s.RemoteAddr(), s.sid)
 
-	s.handle.TriggerEvent(&event.SessionAdd{Session: s})
+	s.handle.TriggerEvent(&SessionAdd{Session: s})
 
 	s.exitSync.Add(2)
 
@@ -54,7 +52,7 @@ func (s *Session) Start() {
 
 	s.exitSync.Wait()
 
-	s.handle.TriggerEvent(&event.SessionRemove{Session: s})
+	s.handle.TriggerEvent(&SessionRemove{Session: s})
 }
 
 func (s *Session) Raw() interface{} {
@@ -71,7 +69,7 @@ func (s *Session) Sid() uint64 {
 
 func (s *Session) Send(msg interface{}) error {
 	if s.IsClose() {
-		return api.SessionClosedError
+		return SessionClosedError
 	}
 
 	select {
@@ -79,7 +77,7 @@ func (s *Session) Send(msg interface{}) error {
 		return nil
 	default:
 		s.Close()
-		return api.SessionBlockedError
+		return SessionBlockedError
 	}
 }
 
@@ -125,7 +123,7 @@ func (s *Session) recvLoop() {
 			return
 		}
 
-		s.handle.TriggerEvent(&event.SessionMsg{Session: s, Msg: msg})
+		s.handle.TriggerEvent(&SessionMsg{Session: s, Msg: msg})
 	}
 
 }

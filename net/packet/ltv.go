@@ -3,7 +3,7 @@ package packet
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/821869798/fantasy/net/api"
+	"github.com/821869798/fantasy/net/network"
 	"io"
 )
 
@@ -33,14 +33,14 @@ type ltvMsgCodec struct {
 	order binary.ByteOrder
 }
 
-func NewLTVMsgCodec(order binary.ByteOrder) api.IMsgCodec {
+func NewLTVMsgCodec(order binary.ByteOrder) network.IMsgCodec {
 	t := &ltvMsgCodec{
 		order: order,
 	}
 	return t
 }
 
-func (t *ltvMsgCodec) OnSendMsg(s api.ISession, msg interface{}) error {
+func (t *ltvMsgCodec) OnSendMsg(s network.ISession, msg interface{}) error {
 	writer, ok := s.Raw().(io.Writer)
 	if !ok || writer == nil {
 		return nil
@@ -61,7 +61,7 @@ func (t *ltvMsgCodec) OnSendMsg(s api.ISession, msg interface{}) error {
 
 	return err
 }
-func (t *ltvMsgCodec) OnRecvMsg(s api.ISession) (interface{}, error) {
+func (t *ltvMsgCodec) OnRecvMsg(s network.ISession) (interface{}, error) {
 	reader, ok := s.Raw().(io.Reader)
 
 	// 转换错误，或者连接已经关闭时退出

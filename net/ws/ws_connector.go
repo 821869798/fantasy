@@ -2,20 +2,19 @@ package ws
 
 import (
 	"encoding/binary"
-	"github.com/821869798/fantasy/net/api"
-	"github.com/821869798/fantasy/net/base"
+	"github.com/821869798/fantasy/net/network"
 	"github.com/gookit/slog"
 	"github.com/gorilla/websocket"
 )
 
 type WsConnector struct {
-	session api.ISession
+	session network.ISession
 	addr    string
 
 	wsSessionAdapter *wsSessionAdapter
 }
 
-func NewWsConnector(addr string, handle api.IMsgHandle, codec api.IMsgCodec, opt *WsStartOpt) *WsConnector {
+func NewWsConnector(addr string, handle network.IMsgHandle, codec network.IMsgCodec, opt *WsStartOpt) *WsConnector {
 	c := &WsConnector{
 		addr: addr,
 	}
@@ -49,12 +48,12 @@ func (c *WsConnector) run() {
 		return
 	}
 
-	s := base.NewSession(1, conn, c.wsSessionAdapter)
+	s := network.NewSession(1, conn, c.wsSessionAdapter)
 	c.session = s
 	s.Start()
 
 }
 
-func (c *WsConnector) Session() api.ISession {
+func (c *WsConnector) Session() network.ISession {
 	return c.session
 }

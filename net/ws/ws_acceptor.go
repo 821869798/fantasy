@@ -3,8 +3,7 @@ package ws
 import (
 	"context"
 	"encoding/binary"
-	"github.com/821869798/fantasy/net/api"
-	"github.com/821869798/fantasy/net/base"
+	"github.com/821869798/fantasy/net/network"
 	"github.com/gookit/slog"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -25,7 +24,7 @@ type WsAcceptor struct {
 	ctxCancel context.CancelFunc
 }
 
-func NewWSAcceptor(addr string, handle api.IMsgHandle, codec api.IMsgCodec, opt *WsStartOpt) *WsAcceptor {
+func NewWSAcceptor(addr string, handle network.IMsgHandle, codec network.IMsgCodec, opt *WsStartOpt) *WsAcceptor {
 
 	if opt == nil {
 		// Create Default
@@ -92,19 +91,19 @@ func (t *WsAcceptor) run() {
 func (t *WsAcceptor) handleSession(sid uint64, conn *websocket.Conn) {
 
 	//handle session
-	s := base.NewSession(sid, conn, t.wsSessionAdapter)
+	s := network.NewSession(sid, conn, t.wsSessionAdapter)
 
 	t.sessMap.Store(sid, conn)
 	s.Start()
 	t.sessMap.Delete(sid)
 }
 
-func (t *WsAcceptor) GetSession(sid uint64) api.ISession {
+func (t *WsAcceptor) GetSession(sid uint64) network.ISession {
 	v, ok := t.sessMap.Load(sid)
 	if !ok {
 		return nil
 	}
-	s, ok := v.(api.ISession)
+	s, ok := v.(network.ISession)
 	if !ok {
 		return nil
 	}

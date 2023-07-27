@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/821869798/fantasy/net/event"
+	"github.com/821869798/fantasy/net/network"
 	"github.com/821869798/fantasy/net/ws"
 	"github.com/gookit/slog"
 )
@@ -12,8 +12,8 @@ type MsgHandle struct {
 
 func (m *MsgHandle) TriggerEvent(e interface{}) {
 	switch e.(type) {
-	case *event.SessionMsg:
-		m := e.(*event.SessionMsg)
+	case *network.SessionMsg:
+		m := e.(*network.SessionMsg)
 		p, ok := m.Msg.(*ws.WsPacket)
 		if ok {
 			slog.Infof("MsgHandle recv server msg:%s", string(p.Value))

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/821869798/fantasy/net/event"
 	"github.com/821869798/fantasy/net/kcp"
+	"github.com/821869798/fantasy/net/network"
 	"github.com/821869798/fantasy/net/packet"
 	"github.com/gookit/slog"
 	"os"
@@ -15,18 +15,18 @@ type MsgHandle struct {
 
 func (m *MsgHandle) TriggerEvent(e interface{}) {
 	switch e.(type) {
-	case *event.SessionMsg:
-		m := e.(*event.SessionMsg)
+	case *network.SessionMsg:
+		m := e.(*network.SessionMsg)
 		p, ok := m.Msg.(*packet.LTVPacket)
 		if ok {
 			slog.Infof("MsgHandle recv client msg:%s", string(p.Value))
 		}
 		_ = m.Session.Send(p)
-	case *event.SessionAdd:
-		m := e.(*event.SessionAdd)
+	case *network.SessionAdd:
+		m := e.(*network.SessionAdd)
 		slog.Infof("Session connected :%v", m.Session.RemoteAddr())
-	case *event.SessionRemove:
-		m := e.(*event.SessionRemove)
+	case *network.SessionRemove:
+		m := e.(*network.SessionRemove)
 		slog.Infof("Session disconnected :%v", m.Session.RemoteAddr())
 	}
 }

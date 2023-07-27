@@ -2,8 +2,7 @@ package kcp
 
 import (
 	"encoding/binary"
-	"github.com/821869798/fantasy/net/api"
-	"github.com/821869798/fantasy/net/base"
+	"github.com/821869798/fantasy/net/network"
 	"github.com/821869798/fantasy/net/packet"
 	"github.com/gookit/slog"
 	"github.com/xtaci/kcp-go/v5"
@@ -12,14 +11,14 @@ import (
 	"time"
 )
 
-func NewKcpAcceptor(addr string, handle api.IMsgHandle, codec api.IMsgCodec, opt *KcpStartOpt) *base.Acceptor {
+func NewKcpAcceptor(addr string, handle network.IMsgHandle, codec network.IMsgCodec, opt *KcpStartOpt) *network.Acceptor {
 	kcpNetwork := newKcpNetwork(handle, codec, opt)
-	return base.NewAcceptor(addr, kcpNetwork)
+	return network.NewAcceptor(addr, kcpNetwork)
 }
 
-func NewKcpConnector(addr string, handle api.IMsgHandle, codec api.IMsgCodec, opt *KcpStartOpt) *base.Connector {
+func NewKcpConnector(addr string, handle network.IMsgHandle, codec network.IMsgCodec, opt *KcpStartOpt) *network.Connector {
 	kcpNetwork := newKcpNetwork(handle, codec, opt)
-	return base.NewConnector(addr, kcpNetwork)
+	return network.NewConnector(addr, kcpNetwork)
 }
 
 type kcpNetwork struct {
@@ -27,7 +26,7 @@ type kcpNetwork struct {
 	adapter *kcpSessionAdapter
 }
 
-func newKcpNetwork(handle api.IMsgHandle, codec api.IMsgCodec, opt *KcpStartOpt) *kcpNetwork {
+func newKcpNetwork(handle network.IMsgHandle, codec network.IMsgCodec, opt *KcpStartOpt) *kcpNetwork {
 
 	if opt == nil {
 		// Create Default
@@ -66,13 +65,13 @@ func (n *kcpNetwork) Dial(addr string) (net.Conn, bool) {
 	return conn, true
 }
 
-func (n *kcpNetwork) SessionAdapter() api.ISessionAdapter {
+func (n *kcpNetwork) SessionAdapter() network.ISessionAdapter {
 	return n.adapter
 }
 
 type kcpSessionAdapter struct {
-	codec  api.IMsgCodec
-	handle api.IMsgHandle
+	codec  network.IMsgCodec
+	handle network.IMsgHandle
 	opt    *KcpStartOpt
 }
 
@@ -94,14 +93,14 @@ func (a *kcpSessionAdapter) CloseConn(rawConn interface{}) error {
 	return conn.Close()
 }
 
-func (a *kcpSessionAdapter) Handle() api.IMsgHandle {
+func (a *kcpSessionAdapter) Handle() network.IMsgHandle {
 	return a.handle
 }
-func (a *kcpSessionAdapter) SendMsg(s api.ISession, msg interface{}) error {
+func (a *kcpSessionAdapter) SendMsg(s network.ISession, msg interface{}) error {
 	return a.codec.OnSendMsg(s, msg)
 }
 
-func (a *kcpSessionAdapter) RecvMsg(s api.ISession) (interface{}, error) {
+func (a *kcpSessionAdapter) RecvMsg(s network.ISession) (interface{}, error) {
 	conn, _ := s.Raw().(net.Conn)
 	err := conn.SetReadDeadline(time.Now().Add(a.opt.Timeout))
 	if err != nil {

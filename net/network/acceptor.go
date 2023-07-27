@@ -1,8 +1,7 @@
-package base
+package network
 
 import (
 	"context"
-	"github.com/821869798/fantasy/net/api"
 	"github.com/gookit/slog"
 	"net"
 	"sync"
@@ -19,10 +18,10 @@ type Acceptor struct {
 
 	listener net.Listener
 
-	network api.INetwork
+	network INetwork
 }
 
-func NewAcceptor(addr string, network api.INetwork) *Acceptor {
+func NewAcceptor(addr string, network INetwork) *Acceptor {
 	a := &Acceptor{
 		addr:    addr,
 		network: network,
@@ -80,12 +79,12 @@ func (t *Acceptor) handleSession(sid uint64, conn net.Conn) {
 	t.sessMap.Delete(sid)
 }
 
-func (t *Acceptor) GetSession(sid uint64) api.ISession {
+func (t *Acceptor) GetSession(sid uint64) ISession {
 	v, ok := t.sessMap.Load(sid)
 	if !ok {
 		return nil
 	}
-	s, ok := v.(api.ISession)
+	s, ok := v.(ISession)
 	if !ok {
 		return nil
 	}

@@ -3,7 +3,7 @@ package ws
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/821869798/fantasy/net/api"
+	"github.com/821869798/fantasy/net/network"
 	"github.com/gorilla/websocket"
 )
 
@@ -29,14 +29,14 @@ type wsMsgCodec struct {
 	order binary.ByteOrder
 }
 
-func NewWsMsgCodec(order binary.ByteOrder) api.IMsgCodec {
+func NewWsMsgCodec(order binary.ByteOrder) network.IMsgCodec {
 	t := &wsMsgCodec{
 		order: order,
 	}
 	return t
 }
 
-func (t *wsMsgCodec) OnSendMsg(s api.ISession, msg interface{}) error {
+func (t *wsMsgCodec) OnSendMsg(s network.ISession, msg interface{}) error {
 	writer, ok := s.Raw().(*websocket.Conn)
 	if !ok || writer == nil {
 		return errors.New("error to send msg,not a websocket conn")
@@ -56,7 +56,7 @@ func (t *wsMsgCodec) OnSendMsg(s api.ISession, msg interface{}) error {
 
 	return err
 }
-func (t *wsMsgCodec) OnRecvMsg(s api.ISession) (interface{}, error) {
+func (t *wsMsgCodec) OnRecvMsg(s network.ISession) (interface{}, error) {
 	reader, ok := s.Raw().(*websocket.Conn)
 	if !ok {
 		return nil, errors.New("error to read,not a websocket conn")

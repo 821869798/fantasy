@@ -1,16 +1,12 @@
-package base
-
-import (
-	"github.com/821869798/fantasy/net/api"
-)
+package network
 
 type Connector struct {
-	session api.ISession
+	session ISession
 	addr    string
-	network api.INetwork
+	network INetwork
 }
 
-func NewConnector(addr string, network api.INetwork) *Connector {
+func NewConnector(addr string, network INetwork) *Connector {
 	c := &Connector{
 		addr:    addr,
 		network: network,
@@ -35,6 +31,6 @@ func (c *Connector) run() {
 
 }
 
-func (c *Connector) Session() api.ISession {
+func (c *Connector) Session() ISession {
 	return c.session
 }
