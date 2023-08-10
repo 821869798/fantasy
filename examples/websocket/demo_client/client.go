@@ -11,9 +11,8 @@ type MsgHandle struct {
 }
 
 func (m *MsgHandle) TriggerEvent(e interface{}) {
-	switch e.(type) {
+	switch m := e.(type) {
 	case *network.SessionMsg:
-		m := e.(*network.SessionMsg)
 		p, ok := m.Msg.(*ws.WsPacket)
 		if ok {
 			slog.Infof("MsgHandle recv server msg:%s", string(p.Value))

@@ -14,19 +14,16 @@ type MsgHandle struct {
 }
 
 func (m *MsgHandle) TriggerEvent(e interface{}) {
-	switch e.(type) {
+	switch m := e.(type) {
 	case *network.SessionMsg:
-		m := e.(*network.SessionMsg)
 		p, ok := m.Msg.(*packet.LTVPacket)
 		if ok {
 			slog.Infof("MsgHandle recv client msg:%s", string(p.Value))
 		}
 		_ = m.Session.Send(p)
 	case *network.SessionAdd:
-		m := e.(*network.SessionAdd)
 		slog.Infof("Session connected :%v", m.Session.RemoteAddr())
 	case *network.SessionRemove:
-		m := e.(*network.SessionRemove)
 		slog.Infof("Session disconnected :%v", m.Session.RemoteAddr())
 	}
 }
